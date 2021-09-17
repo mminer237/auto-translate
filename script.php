@@ -13,3 +13,9 @@
 	else {
 		exit("No API keys file found");
 	}
+
+	$options = getopt('hi:o:');
+	if (isset($options['h']))
+		exit(file_get_contents('help.txt'));
+	$input = $options['i'];
+	$output = $options['i'];

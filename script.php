@@ -12,7 +12,7 @@
 	if (file_exists($api_keys_file))
 		$api_keys = Yaml::parseFile($api_keys_file);
 	else {
-		exit("No API keys file found");
+		exit("No API keys file found\n");
 	}
 
 	$options = getopt('hi:l:o:rt:');
@@ -35,13 +35,14 @@
 		$recursive = true;
 	}
 	else
-		exit('Input and output not set');
+		exit("Input, output, and languages not all set\n");
 
 	$targets = explode(',', $targets);
 	foreach ($targets as &$target)
 		$target = trim($target);
 	
-	$googleTranslate = new TranslateClient(['key' => $api_keys['googleTranslate']]);
+	if ($api_keys['googleTranslate'])
+		$googleTranslate = new TranslateClient(['key' => $api_keys['googleTranslate']]);
 
 	function get_type(string $file_path): string {
 		if (strlen($file_path) > 5) {
@@ -59,7 +60,7 @@
 				substr($file_path, -7) === '.sqlite' ||
 				substr($file_path, -8) === '.sqlite3'
 			) {
-				exit("Databases are not supported");
+				exit("Databases are not supported\n");
 			}
 			else {
 				return 'other';

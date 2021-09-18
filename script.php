@@ -149,7 +149,8 @@
 			});
 
 			$output_path = "$output_dir/$target/$output_file_name";
-			mkdir("$output_dir/$target", 0777, true);
+			if (!is_dir("$output_dir/$target"))
+				mkdir("$output_dir/$target", 0777, true);
 			echo "Putting results in $output_dir/$target/$output_file_name...\n";
 			switch ($output_type) {
 				case 'yaml':

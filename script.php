@@ -58,28 +58,28 @@
 	}
 
 	function process_dir(string $dir): void {
-		global $output_dir;
-		global $targets;
-		global $googleTranslate;
 
 		foreach (scandir($dir) as $file_path) {
 			if ($file_path !== '.' && $file_path !== '..') {
 				if (is_dir($dir.'/'.$file_path)) {
-					process_dir($dir.'/'.$file_path, $output_dir);
+					process_dir($dir.'/'.$file_path, $file_path);
 				}
 				else {
-					process_file($dir.'/'.$file_path, $output_dir);
+					process_file($dir.'/'.$file_path, $file_path);
 				}
 			}
 		}
 	}
 
-	function process_file(string $input_path): void {
+	function process_file(string $input_path, string $output_file_name): void {
 		global $output_dir;
+		global $output_type;
+		global $targets;
 
 		echo "Processing $input_path...\n";
 
 		$input_type = get_type($input_path);
+		$output_type = $output_type ?: $input_type;
 			
 		switch ($input_type) {
 			case 'json':
@@ -94,14 +94,26 @@
 				break;
 		}
 
-		$output = $input;
-		array_walk_recursive($output, function(&$value, $key) {
-			global $targets;
-			global $api_keys;
-			global $googleTranslate;
+		$output_path_ext = pathinfo($output_file_name, PATHINFO_EXTENSION);
+		if (
+			$output_path_ext !== $output_type ||
+			($output_path_ext !== 'yml' && $output_type === 'yaml') ||
+			$output_type === 'other'
+		) {
+			$output_file_name = preg_replace(
+				'/\.[^\/.]+$/',
+				$output_type === 'other' ? '' : '.'.$output_type,
+				$output_file_name
+			);
+		}
 
-			if (is_string($value)) {
-				foreach ($targets as $target) {
+		foreach ($targets as $target) {
+			$output = $input;
+			array_walk_recursive($output, function(&$value, $key) use ($target) {
+				global $api_keys;
+				global $googleTranslate;
+
+				if (is_string($value)) {
 					echo "Sending: $value";
 					$curl_request = curl_init('https://api-free.deepl.com/v2/translate');
 					curl_setopt($curl_request, CURLOPT_POST, true);
@@ -124,11 +136,27 @@
 						$value = $googleTranslate->translate($value, ['target' => $target])['text'];
 					echo "Value: $value";
 				}
+			});
+
+			$output_path = "$output_dir/$target/$output_file_name";
+			mkdir("$output_dir/$target", 0777, true);
+			echo "Putting results in $output_dir/$target/$output_file_name...\n";
+			switch ($output_type) {
+				case 'yaml':
+					file_put_contents($output_path, Yaml::dump($output));
+					break;
+				case 'json':
+					file_put_contents($output_path, json_encode($output));
+					break;
+				case 'txt':
+				default:
+					file_put_contents($output_path, $output);
+					break;
 			}
-		});
+		}
 	}
 
 	if (is_dir($input_path))
 		process_dir($input_path);
 	else
-		process_file($input_path);
+		process_file($input_path, pathinfo($input_path, PATHINFO_BASENAME));

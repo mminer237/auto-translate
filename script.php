@@ -15,21 +15,26 @@
 		exit("No API keys file found");
 	}
 
-	$options = getopt('hi:o:rt:');
+	$options = getopt('hi:l:o:rt:');
 	if (isset($options['h']))
 		exit(file_get_contents('help.txt'));
 	$input_path = $options['i'];
+	$targets = $options['l'];
 	$output_dir = $options['o'];
 	$recursive = isset($options['r']);
 	$output_type = $options['t'];
-	if ((!isset($input_path) || !isset($output_dir)) && count($argv) >= 4) {
+	if ((!isset($input_path) || !isset($output_dir) || !isset($targets)) && count($argv) >= 4) {
 		$input_path = $argv[2];
 		$output_dir = $argv[3];
+		$targets = $argv[3];
 		$recursive = true;
 	}
 	else
 		exit('Input and output not set');
 
+	$targets = explode(',', $targets);
+	foreach ($targets as &$target)
+		$target = trim($target);
 	
 	$googleTranslate = new TranslateClient(['key' => $api_keys['googleTranslate']]);
 

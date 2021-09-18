@@ -124,27 +124,39 @@
 				global $googleTranslate;
 
 				if (is_string($value)) {
-					echo "Sending: $value";
-					$curl_request = curl_init('https://api-free.deepl.com/v2/translate');
-					curl_setopt($curl_request, CURLOPT_POST, true);
-					curl_setopt($curl_request, CURLOPT_RETURNTRANSFER, true);
-					curl_setopt($curl_request, CURLOPT_POSTFIELDS, http_build_query([
-						'auth_key' => $api_keys['deepl'],
-						'text' => $value,
-						'target_lang' => $target
-					]));
-					curl_setopt($curl_request, CURLOPT_HTTPHEADER, [
-						'Content-Type' => 'application/x-www-form-urlencoded'
-					]);
-					$response = curl_exec($curl_request);
-					echo "DeepL Response:\n";
-					print_r($response);
+					echo "Sending: $value\n";
+					
+					if ($api_keys['deepl']) {
+						$curl_request = curl_init('https://api-free.deepl.com/v2/translate');
+						curl_setopt($curl_request, CURLOPT_POST, true);
+						curl_setopt($curl_request, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($curl_request, CURLOPT_POSTFIELDS, http_build_query([
+							'auth_key' => $api_keys['deepl'],
+							'text' => $value,
+							'target_lang' => $target
+						]));
+						curl_setopt($curl_request, CURLOPT_HTTPHEADER, [
+							'Content-Type' => 'application/x-www-form-urlencoded'
+						]);
+						$response = curl_exec($curl_request);
+						if($response === false) {
+							exit(curl_error($curl_request)."\n");
+						}
+					}
 
-					if ($response)
-						$value = json_decode($response, true)['translations']['text'];
-					else
+					if (isset($response) && $response)
+						$response = json_decode($response, true);
+					if (isset($response) && isset($response['translations'])) {
+						echo "Using DeepL...\n";
+						$value = $response['translations'][0]['text'];
+					}
+					elseif ($googleTranslate) {
+						echo "Using Google Translate...\n";
 						$value = $googleTranslate->translate($value, ['target' => $target])['text'];
-					echo "Value: $value";
+					}
+					else
+						exit("No translation available\n");
+					echo "Response: $value\n";
 				}
 			});
 

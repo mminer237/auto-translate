@@ -27,10 +27,10 @@
 	$recursive = isset($options['r']);
 	if (isset($options['t']))
 		$output_type = $options['t'];
-		
+
 	if ((!isset($input_path) || !isset($output_dir) || !isset($targets)) && count($argv) >= 4) {
-		$input_path = $argv[2];
-		$output_dir = $argv[3];
+		$input_path = $argv[1];
+		$output_dir = $argv[2];
 		$targets = $argv[3];
 		$recursive = true;
 	}

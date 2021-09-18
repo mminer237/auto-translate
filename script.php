@@ -18,11 +18,16 @@
 	$options = getopt('hi:l:o:rt:');
 	if (isset($options['h']))
 		exit(file_get_contents('help.txt'));
-	$input_path = $options['i'];
-	$targets = $options['l'];
-	$output_dir = $options['o'];
+	if (isset($options['i']))
+		$input_path = $options['i'];
+	if (isset($options['l']))
+		$targets = $options['l'];
+	if (isset($options['o']))
+		$output_dir = $options['o'];
 	$recursive = isset($options['r']);
-	$output_type = $options['t'];
+	if (isset($options['t']))
+		$output_type = $options['t'];
+		
 	if ((!isset($input_path) || !isset($output_dir) || !isset($targets)) && count($argv) >= 4) {
 		$input_path = $argv[2];
 		$output_dir = $argv[3];

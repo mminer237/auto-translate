@@ -1,0 +1,11 @@
+Usage:
+	script.php <input-file|input-dir> <output-dir> <languages>
+	script.php -h
+	script.php [-r] -i <input-file|input-dir> -o <output-dir> -l <languages> [-t <output-file-type>]
+
+	-h                       	Show this help
+	-i <input-file|input-dir>	Specify input file
+	-l <languages>           	Specify output languages
+	-o <output-dir>          	Specify output directory
+	-r                       	Recursively translate directory
+	-t <output-file-type>    	Specify output file type

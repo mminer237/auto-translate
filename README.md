@@ -32,6 +32,6 @@ Usage:
 ```
 
 ## Copyright
-Copyright (c) 2021 Matthew Miner
+Copyright © 2021 Matthew Miner
 
 Released under the MIT License

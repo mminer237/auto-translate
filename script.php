@@ -43,6 +43,39 @@
 	
 	if ($api_keys['googleTranslate'])
 		$googleTranslate = new TranslateClient(['key' => $api_keys['googleTranslate']]);
+	
+	const DEEPL_LIMIT = 500000;
+	const GOOGLE_TRANSLATE_LIMIT = 500000;
+	const OLD_CHAR_COUNTS_FILE = 'api_usage.yaml';
+	$remaining_chars = [
+		'deepl' => DEEPL_LIMIT,
+		'googleTranslate' => GOOGLE_TRANSLATE_LIMIT
+	];
+	$today = date('Y-m-d');
+	if (file_exists(OLD_CHAR_COUNTS_FILE)) {
+		$old_char_counts = Yaml::parseFile(OLD_CHAR_COUNTS_FILE);
+		$first_of_month = date('Y-m-d', strtotime('first day of this month'));
+		foreach ($old_char_counts as $service => $counts) {
+			foreach ($counts as $date => $count) {
+				if ($date < $first_of_month) {
+					unset($counts[$date]);
+				}
+				else {
+					$remaining_chars[$service] -= $count;
+				}
+			}
+		}
+		$char_counts = $old_char_counts;
+		if (!isset($char_counts['deepl'][$today]))
+			$char_counts['deepl'][$today] = 0;
+		if (!isset($char_counts['googleTranslate'][$today]))
+			$char_counts['googleTranslate'][$today] = 0;
+	}
+	else
+		$char_counts = [
+			'deepl' => [$today => 0],
+			'googleTranslate' => [$today => 0]
+		];
 
 	function get_type(string $file_path): string {
 		if (strlen($file_path) > 5) {
@@ -122,38 +155,57 @@
 			$output = $input;
 			array_walk_recursive($output, function(&$value, $key) use ($target) {
 				global $api_keys;
+				global $char_counts;
 				global $googleTranslate;
+				global $remaining_chars;
+				global $today;
 
 				if (is_string($value)) {
+					$value_length = mb_strlen($value);
+					
 					echo "Sending: $value\n";
 					
-					if ($api_keys['deepl']) {
-						$curl_request = curl_init('https://api-free.deepl.com/v2/translate');
-						curl_setopt($curl_request, CURLOPT_POST, true);
-						curl_setopt($curl_request, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($curl_request, CURLOPT_POSTFIELDS, http_build_query([
-							'auth_key' => $api_keys['deepl'],
-							'text' => $value,
-							'target_lang' => $target
-						]));
-						curl_setopt($curl_request, CURLOPT_HTTPHEADER, [
-							'Content-Type' => 'application/x-www-form-urlencoded'
-						]);
-						$response = curl_exec($curl_request);
-						if($response === false) {
-							exit(curl_error($curl_request)."\n");
+					if ($api_keys['deepl'] ) {
+						if ($remaining_chars['deepl'] >= $value_length) {
+							$curl_request = curl_init('https://api-free.deepl.com/v2/translate');
+							curl_setopt($curl_request, CURLOPT_POST, true);
+							curl_setopt($curl_request, CURLOPT_RETURNTRANSFER, true);
+							curl_setopt($curl_request, CURLOPT_POSTFIELDS, http_build_query([
+								'auth_key' => $api_keys['deepl'],
+								'text' => $value,
+								'target_lang' => $target
+							]));
+							curl_setopt($curl_request, CURLOPT_HTTPHEADER, [
+								'Content-Type' => 'application/x-www-form-urlencoded'
+							]);
+							$response = curl_exec($curl_request);
+							if($response === false) {
+								exit(curl_error($curl_request)."\n");
+							}
 						}
+						else
+							echo 'DeepL quota reached';
 					}
 
 					if (isset($response) && $response)
 						$response = json_decode($response, true);
 					if (isset($response) && isset($response['translations'])) {
 						echo "Using DeepL...\n";
+						$char_counts['deepl'][$today] += $value_length;
+						$remaining_chars['deepl'] -= $value_length;
 						$value = $response['translations'][0]['text'];
 					}
 					elseif ($googleTranslate) {
-						echo "Using Google Translate...\n";
-						$value = $googleTranslate->translate($value, ['target' => $target])['text'];
+						if ($remaining_chars['googleTranslate'] >= $value_length) {
+							echo "Using Google Translate...\n";
+							$char_counts['googleTranslate'][$today] += $value_length;
+							$remaining_chars['googleTranslate'] -= $value_length;
+							$value = $googleTranslate->translate($value, ['target' => $target])['text'];
+						}
+						else {
+							echo "Google Translate quota reached\n";
+							exit("No translation available\n");
+						}
 					}
 					else
 						exit("No translation available\n");
@@ -184,3 +236,10 @@
 		process_dir($input_path);
 	else
 		process_file($input_path, pathinfo($input_path, PATHINFO_BASENAME));
+	
+	echo "Translating complete\n";
+	echo "Characters remaining this month:\n";
+	echo "\tDeepL:            {$remaining_chars['deepl']}\n";
+	echo "\tGoogle Translate: {$remaining_chars['googleTranslate']}\n";
+
+	file_put_contents(OLD_CHAR_COUNTS_FILE, Yaml::dump($char_counts));

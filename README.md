@@ -12,7 +12,7 @@ To get a free API key:
 * [Sign up for a free API key with DeepL](https://www.deepl.com/pro/change-plan#developer)
 * [Start a project on Google Cloud Platform and generate a basic "API Key"](https://console.cloud.google.com/apis/credentials)
 
-Warning: This does not count characters and can exceed Google's free limit.
+This counts characters and should avoid exceeding the free limits, but this is not guaranteed and a bug could cause you to exceed Google's free limit.
 
 It can be easily modified to use DeepL's paid plan.
 

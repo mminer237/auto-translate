@@ -22,9 +22,11 @@ Usage:
 	script.php <input-file|input-dir> <output-dir> <languages>
 	script.php -h
 	script.php [-r] -i <input-file|input-dir> -o <output-dir> -l <languages> [-t <output-file-type>]
+	script.php -k <language-key> [-r] -i <input-file|input-dir> [-o <output-file>] -l <languages>
 
-	-h                       	Show help
+	-h                       	Show this help
 	-i <input-file|input-dir>	Specify input file
+	-k                       	Translate inside file based on specified language code keys
 	-l <languages>           	Specify output languages
 	-o <output-dir>          	Specify output directory
 	-r                       	Recursively translate directory

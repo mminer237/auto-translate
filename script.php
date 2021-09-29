@@ -28,14 +28,15 @@
 	if (isset($options['t']))
 		$output_type = $options['t'];
 
-	if ((!isset($input_path) || !isset($output_dir) || !isset($targets)) && count($argv) >= 4) {
-		$input_path = $argv[1];
-		$output_dir = $argv[2];
-		$targets = $argv[3];
-		$recursive = true;
-	}
-	else
-		exit("Input, output, and languages not all set\n");
+	if (!isset($input_path) || !isset($output_dir) || !isset($targets))
+		if (count($argv) >= 4) {
+			$input_path = $argv[1];
+			$output_dir = $argv[2];
+			$targets = $argv[3];
+			$recursive = true;
+		}
+		else
+			exit("Input, output, and languages not all set\n");
 
 	$targets = explode(',', $targets);
 	foreach ($targets as &$target)

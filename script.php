@@ -260,7 +260,7 @@
 				file_put_contents($output_path, Yaml::dump($output));
 				break;
 			case 'json':
-				file_put_contents($output_path, json_encode($output, JSON_UNESCAPED_UNICODE));
+				file_put_contents($output_path, json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 				break;
 			case 'txt':
 			default:
